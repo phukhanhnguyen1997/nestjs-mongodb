@@ -45,7 +45,7 @@ class PostsService {
     }
 
     const results = await findQuery;
-    const count = await this.postModel.count();
+    const count = await this.postModel.countDocuments();
 
     return { results, count };
   }
@@ -67,7 +67,7 @@ class PostsService {
       ...postData,
       author,
     });
-    await createdPost.populate('categories').populate('series').execPopulate();
+    await createdPost.populate(['categories', 'series']);
     return createdPost.save();
   }
 

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, ObjectId } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { Exclude, Transform, Type } from 'class-transformer';
 import { Address, AddressSchema } from './address.schema';
 import { Post } from '../posts/post.schema';
@@ -14,15 +14,15 @@ export type UserDocument = User & Document;
 })
 export class User {
   @Transform(({ value }) => value.toString())
-  _id: ObjectId;
+  _id: Types.ObjectId;
 
-  @Prop({ unique: true })
+  @Prop({ unique: true, required: true })
   email: string;
 
-  @Prop()
+  @Prop({ required: true })
   firstName: string;
 
-  @Prop()
+  @Prop({ required: true })
   lastName: string;
 
   fullName: string;
@@ -35,17 +35,7 @@ export class User {
   @Type(() => Address)
   address: Address;
 
-  @Prop({
-    get: (creditCardNumber: string) => {
-      if (!creditCardNumber) {
-        return;
-      }
-      const lastFourDigits = creditCardNumber.slice(
-        creditCardNumber.length - 4,
-      );
-      return `****-****-****-${lastFourDigits}`;
-    },
-  })
+  @Prop({ type: String })
   creditCardNumber?: string;
 
   @Type(() => Post)
@@ -56,8 +46,19 @@ const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.index({ firstName: 'text', lastName: 'text' });
 
-UserSchema.virtual('fullName').get(function (this: User) {
+UserSchema.virtual('fullName').get(function (this: UserDocument) {
   return `${this.firstName} ${this.lastName}`;
+});
+
+UserSchema.path('creditCardNumber').get(function (
+  this: UserDocument,
+  creditCardNumber: string,
+) {
+  if (!creditCardNumber) {
+    return undefined;
+  }
+  const lastFourDigits = creditCardNumber.slice(-4);
+  return `****-****-****-${lastFourDigits}`;
 });
 
 UserSchema.virtual('posts', {

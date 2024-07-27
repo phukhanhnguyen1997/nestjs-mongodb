@@ -1,45 +1,38 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, ObjectId } from 'mongoose';
-import * as mongoose from 'mongoose';
-import { User } from '../users/user.schema';
+import { Document, Types } from 'mongoose';
 import { Transform, Type } from 'class-transformer';
+import { User } from '../users/user.schema';
 import { Category } from '../categories/category.schema';
 import { Series } from '../series/series.schema';
-
-export type PostDocument = Post & Document;
 
 @Schema()
 export class Post {
   @Transform(({ value }) => value.toString())
-  _id: ObjectId;
+  _id: Types.ObjectId;
 
-  @Prop()
+  @Prop({ required: true })
   title: string;
 
   @Prop({
-    set: (content: string) => {
-      return content.trim();
-    },
+    required: true,
+    set: (content: string) => content.trim(),
   })
   content: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: User.name })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   @Type(() => User)
-  author: User;
+  author: Types.ObjectId | User;
 
-  @Prop({
-    type: [{ type: mongoose.Schema.Types.ObjectId, ref: Category.name }],
-  })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Category' }] })
   @Type(() => Category)
-  categories: Category[];
+  categories: Types.ObjectId[] | Category[];
 
-  @Prop({
-    type: mongoose.Schema.Types.ObjectId,
-    ref: Series.name,
-  })
+  @Prop({ type: Types.ObjectId, ref: 'Series' })
   @Type(() => Series)
-  series?: Series;
+  series?: Types.ObjectId | Series;
 }
+
+export type PostDocument = Post & Document;
 
 const PostSchema = SchemaFactory.createForClass(Post);
 
